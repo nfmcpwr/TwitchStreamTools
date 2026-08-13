@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "TwitchStreamArchive": {
+      "commandName": "Project"
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker"
+    }
+  }
+}
