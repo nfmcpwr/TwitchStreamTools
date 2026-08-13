@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System;
 using System.IO;
 
 namespace TwitchStreamTools
@@ -14,7 +15,16 @@ namespace TwitchStreamTools
 
         public static Config? Load(string path)
         {
-            return JsonConvert.DeserializeObject<Config>(File.ReadAllText(path));
+            try
+            {
+                return JsonConvert.DeserializeObject<Config>(File.ReadAllText(path));
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+
+                return null;
+            }
         }
 
         public static readonly Config DefaultConfig = new Config
