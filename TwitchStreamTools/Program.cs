@@ -108,7 +108,7 @@ namespace TwitchStreamTools
                 Directory.CreateDirectory(downloadDir);
             }
 
-            await _Downloader.RequestDownload(r.Videos[0].Url, options, channel);
+            await _Downloader.RequestDownload(r.Videos[0].Url, options, channel, downloadDir);
         }
     }
 }

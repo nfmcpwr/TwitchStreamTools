@@ -2,7 +2,6 @@
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
-using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
 namespace TwitchStreamTools
@@ -16,19 +15,15 @@ namespace TwitchStreamTools
             this._DownloaderPath = downloaderPath;
         }
 
-        public async Task RequestDownload(string videoUrl, DownloaderOptions options, string channel)
+        public async Task RequestDownload(string videoUrl, DownloaderOptions options, string channel, string outputPath)
         {
             ProcessStartInfo si = new ProcessStartInfo
             {
                 FileName = this._DownloaderPath,
                 Arguments = $"{options.Parse()} {videoUrl}",
+                WorkingDirectory = outputPath,
                 RedirectStandardOutput = true,
             };
-
-            if (!string.IsNullOrEmpty(options.OutputDir))
-            {
-                si.WorkingDirectory = options.OutputDir;
-            }
 
             Process p = Process.Start(si)!;
             while (true)
@@ -48,22 +43,7 @@ namespace TwitchStreamTools
 
         public static async Task<string> GetDownloaderPathAsync()
         {
-            string binName;
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                if (Environment.Is64BitOperatingSystem)
-                {
-                    binName = "yt-dlp.exe";
-                }
-                else
-                {
-                    binName = "yt-dlp_x86.exe";
-                }
-            }
-            else
-            {
-                binName = "yt-dlp_linux";
-            }
+            string binName = "yt-dlp_linux";
 
             foreach (string path in Directory.GetFiles(Environment.CurrentDirectory))
             {

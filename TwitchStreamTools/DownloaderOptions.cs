@@ -1,42 +1,39 @@
-﻿using System;
-
-namespace TwitchStreamTools
+﻿namespace TwitchStreamTools
 {
     internal class DownloaderOptions
     {
         public string? OutputFileFormat { get; set; }
         public string? OutputFileName { get; set; }
-        public string? OutputDir { get; set; }
         public bool LiveFromStart { get; set; }
         public string? AdditionalOptions { get; set; }
 
         public string Parse()
         {
             string result = "--newline";
-            if (!string.IsNullOrEmpty(OutputFileFormat))
+            if (!string.IsNullOrEmpty(this.OutputFileFormat))
             {
-                result += $" -t {OutputFileFormat}";
+                result += $" -t {this.OutputFileFormat}";
             }
 
-            if (!string.IsNullOrEmpty(OutputFileName))
+            if (!string.IsNullOrEmpty(this.OutputFileName))
             {
-                result += $" -o \"{OutputFileName}\"";
+                result += $" -o \"{this.OutputFileName}\"";
             }
 
-            if (LiveFromStart)
+            if (this.LiveFromStart)
             {
                 result += " --live-from-start";
             }
 
-            if (!string.IsNullOrEmpty(AdditionalOptions))
+            if (!string.IsNullOrEmpty(this.AdditionalOptions))
             {
-                result += $" {AdditionalOptions}";
+                result += $" {this.AdditionalOptions}";
             }
 
             return result;
         }
 
-        public static readonly DownloaderOptions Default = new DownloaderOptions()
+        public static readonly DownloaderOptions Default = new DownloaderOptions
         {
             OutputFileFormat = Format.MP4,
             OutputFileName = "",
