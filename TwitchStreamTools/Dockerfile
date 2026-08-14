@@ -23,5 +23,6 @@ RUN dotnet publish "./TwitchStreamTools.csproj" -c $BUILD_CONFIGURATION -o /app/
 # このステージは、運用環境または VS から通常モードで実行している場合に使用されます (デバッグ構成を使用しない場合の既定)
 FROM base AS final
 WORKDIR /app
+VOLUME /data /Downloads
 COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "TwitchStreamTools.dll"]
