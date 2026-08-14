@@ -24,6 +24,15 @@ namespace TwitchStreamTools
                 File.WriteAllText("/data/config.json",
                     JsonConvert.SerializeObject(Config.DefaultConfig, Formatting.Indented));
 
+                Console.WriteLine("Created default config file");
+
+                return;
+            }
+
+            if (_Config.Equals(Config.DefaultConfig))
+            {
+                Console.WriteLine("Loaded default config file. Please update");
+
                 return;
             }
 

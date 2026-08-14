@@ -4,7 +4,7 @@ using System.IO;
 
 namespace TwitchStreamTools
 {
-    internal class Config
+    internal record Config
     {
         public string? TwitchClientId { get; set; }
         public string? TwitchClientSecret { get; set; }
