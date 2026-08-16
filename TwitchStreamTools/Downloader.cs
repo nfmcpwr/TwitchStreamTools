@@ -60,8 +60,13 @@ namespace TwitchStreamTools
                 throw new Exception("Failed to download yt-dlp binary");
             }
 
-            File.WriteAllBytes(Path.Combine(Environment.CurrentDirectory, binName),
+            await File.WriteAllBytesAsync(Path.Combine(Environment.CurrentDirectory, binName),
                 await response.Content.ReadAsByteArrayAsync());
+
+            File.SetUnixFileMode(Path.Combine(Environment.CurrentDirectory, binName),
+                UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute |
+                UnixFileMode.GroupRead | UnixFileMode.GroupExecute |
+                UnixFileMode.OtherRead | UnixFileMode.OtherExecute);
 
             return Path.Combine(Environment.CurrentDirectory, binName);
         }
