@@ -2,10 +2,11 @@
 {
     internal class DownloaderOptions
     {
-        public string? OutputFileFormat { get; set; }
-        public string? OutputFileName { get; set; }
-        public bool LiveFromStart { get; set; }
-        public string? AdditionalOptions { get; set; }
+        public string? OutputFileFormat     { get; set; }
+        public string? OutputFileName       { get; set; }
+        public bool    LiveFromStart        { get; set; }
+        public string? AdditionalOptions    { get; set; }
+        public bool    NotifyOnDownloadTask { get; set; }
 
         public string Parse()
         {

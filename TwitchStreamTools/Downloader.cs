@@ -15,7 +15,11 @@ namespace TwitchStreamTools
             this._DownloaderPath = downloaderPath;
         }
 
-        public async Task RequestDownload(string videoUrl, DownloaderOptions options, string channel, string outputPath)
+        public async Task<bool> RequestDownload(
+            string            videoUrl,
+            DownloaderOptions options,
+            string            channel,
+            string            outputPath)
         {
             ProcessStartInfo si = new ProcessStartInfo
             {
@@ -38,7 +42,9 @@ namespace TwitchStreamTools
                 Console.WriteLine($"[{channel}] {s}");
             }
 
-            Console.WriteLine("Completed");
+            Console.WriteLine($"[{channel}] Task completed");
+
+            return p.ExitCode == 0;
         }
 
         public static async Task<string> GetDownloaderPathAsync()
