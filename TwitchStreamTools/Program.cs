@@ -5,14 +5,16 @@ using System.IO;
 using System.Threading.Tasks;
 using TwitchLib.Api.Helix.Models.Videos.GetVideos;
 using TwitchLib.Api.Services.Events.LiveStreamMonitor;
+using Stream = TwitchLib.Api.Helix.Models.Streams.GetStreams.Stream;
 
 namespace TwitchStreamTools
 {
     internal class Program
     {
-        private static StreamMonitor? _Monitor;
-        private static Downloader?    _Downloader = null;
-        private static Config?        _Config     = null;
+        private static StreamMonitor?               _Monitor;
+        private static Downloader?                  _Downloader = null;
+        private static Config?                      _Config     = null;
+        private static Dictionary<string, Stream?>? _Stream     = null;
 
         private static void Main(string[] args)
         {
@@ -37,6 +39,8 @@ namespace TwitchStreamTools
                 return;
             }
 
+            _Stream = new Dictionary<string, Stream?>();
+
             WebHook.SetWebHookUrl(_Config.WebHookUrl);
 
             _Monitor = new StreamMonitor(_Config.TwitchClientId!, _Config.TwitchClientSecret!);
@@ -60,12 +64,34 @@ namespace TwitchStreamTools
             _Monitor?.Stop();
         }
 
-        private static void Mon_OnStreamUpdate(
+        private static async void Mon_OnStreamUpdate(
             object?            sender,
             OnStreamUpdateArgs e)
         {
             Console.WriteLine(
-                $"Stream Update: Channel={e.Channel}, Title={e.Stream.Title} Game={e.Stream.GameName}, ID={e.Stream.Id}");
+                $"Stream update: Channel={e.Channel}, Title={e.Stream.Title} Game={e.Stream.GameName}, ID={e.Stream.Id}");
+
+            if (e.Stream.Id != _Stream![e.Channel]!.Id)
+            {
+                Console.WriteLine($"Stream changed: {_Stream![e.Channel]!.Id} => {e.Stream.Id}");
+
+                if (!string.IsNullOrEmpty(_Config!.WebHookUrl) && !string.IsNullOrEmpty(_Config.WebHookMessage))
+                {
+                    await WebHook.SendStreamNotification(_Config.WebHookMessage, e.Stream);
+                }
+
+                if (_Config!.DownloaderOptions != null && !_Config.DownloaderOptions.LiveFromStart)
+                {
+                    await DownloadVideo(_Stream![e.Channel]!, _Config.DownloaderOptions);
+                }
+
+                if (_Config!.DownloaderOptions != null && _Config.DownloaderOptions.LiveFromStart)
+                {
+                    await DownloadVideo(e.Stream, _Config.DownloaderOptions);
+                }
+
+                _Stream![e.Channel] = e.Stream;
+            }
         }
 
         private static async void Mon_OnStreamOffline(
@@ -73,11 +99,13 @@ namespace TwitchStreamTools
             OnStreamOfflineArgs e)
         {
             Console.WriteLine(
-                $"Stream Offline: Channel={e.Channel}, Title={e.Stream.Title} Game={e.Stream.GameName}, ID={e.Stream.Id}");
+                $"Stream offline: Channel={e.Channel}, Title={e.Stream.Title} Game={e.Stream.GameName}, ID={e.Stream.Id}");
+
+            _Stream![e.Channel] = null;
 
             if (_Config!.DownloaderOptions != null && !_Config.DownloaderOptions.LiveFromStart)
             {
-                await DownloadVideo(e.Channel, _Config.DownloaderOptions);
+                await DownloadVideo(e.Stream, _Config.DownloaderOptions);
             }
         }
 
@@ -86,21 +114,22 @@ namespace TwitchStreamTools
             OnStreamOnlineArgs e)
         {
             Console.WriteLine(
-                $"Stream Online: Channel={e.Channel}, Title={e.Stream.Title}, Game={e.Stream.GameName}, ID={e.Stream.Id}");
+                $"Stream online: Channel={e.Channel}, Title={e.Stream.Title}, Game={e.Stream.GameName}, ID={e.Stream.Id}");
+
+            _Stream![e.Channel] = e.Stream;
 
             if (!string.IsNullOrEmpty(_Config!.WebHookUrl) && !string.IsNullOrEmpty(_Config.WebHookMessage))
             {
-                await WebHook.SendStreamNotification(
-                    _Config.WebHookMessage, e.Stream);
+                await WebHook.SendStreamNotification(_Config.WebHookMessage, e.Stream);
             }
 
             if (_Config!.DownloaderOptions != null && _Config!.DownloaderOptions.LiveFromStart)
             {
-                await DownloadVideo(e.Channel, _Config.DownloaderOptions);
+                await DownloadVideo(e.Stream, _Config.DownloaderOptions);
             }
         }
 
-        private static async Task DownloadVideo(string channel, DownloaderOptions options)
+        private static async Task DownloadVideo(Stream stream, DownloaderOptions options)
         {
             if (_Downloader == null)
             {
@@ -109,10 +138,10 @@ namespace TwitchStreamTools
             }
 
             GetVideosResponse r = await _Monitor!.TwitchApi.Helix.Videos.GetVideosAsync(
-                userId: (await _Monitor.TwitchApi.Helix.Users.GetUsersAsync(logins: new List<string>
+                new List<string>
                 {
-                    channel,
-                })).Users[0].Id,
+                    stream.Id,
+                },
                 first: 1);
 
             if (options.NotifyOnDownloadTask)
@@ -120,15 +149,15 @@ namespace TwitchStreamTools
                 await WebHook.SendDownloadTaskNotification(r.Videos[0].Url, r.Videos[0].Title);
             }
 
-            Console.WriteLine($"[{channel}]Download request: {r.Videos[0].Url}");
+            Console.WriteLine($"[{stream.UserLogin}]Download request: {r.Videos[0].Url}");
 
-            string downloadDir = $"/Downloads/{channel}";
+            string downloadDir = $"/Downloads/{stream.UserLogin}";
             if (!Directory.Exists(downloadDir))
             {
                 Directory.CreateDirectory(downloadDir);
             }
 
-            bool result = await _Downloader.RequestDownload(r.Videos[0].Url, options, channel, downloadDir);
+            bool result = await _Downloader.RequestDownload(r.Videos[0].Url, options, stream.UserLogin, downloadDir);
 
             if (options.NotifyOnDownloadTask)
             {
